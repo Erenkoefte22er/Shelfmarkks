@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shelfmark — Reading Analytics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#2b2620;
+    --paper:#efe8d8;
+    --paper-2:#e6dcc4;
+    --forest:#1f3a2e;
+    --forest-2:#16281f;
+    --burgundy:#8b2e2e;
+    --gold:#c9a227;
+    --sage:#7c9885;
+    --line: rgba(43,38,32,0.14);
+    --shadow: 0 12px 30px -14px rgba(31,58,46,0.35);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:var(--gold);color:var(--forest-2);}
+
+  .wrap{max-width:1180px;margin:0 auto;padding:0 32px;}
+
+  /* ---------- Header ---------- */
+  header{
+    position:sticky;top:0;z-index:50;
+    background:rgba(239,232,216,0.86);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .nav{display:flex;align-items:center;justify-content:space-between;padding:18px 32px;max-width:1180px;margin:0 auto;}
+  .brand{display:flex;align-items:center;gap:10px;font-family:'Fraunces',serif;font-weight:600;font-size:20px;letter-spacing:0.2px;}
+  .brand .mark{
+    width:22px;height:28px;border-radius:2px 6px 2px 2px;
+    background:linear-gradient(180deg,var(--burgundy),var(--forest));
+    display:inline-block;
+    box-shadow: inset -3px 0 0 rgba(0,0,0,0.15);
+  }
+  .nav-links{display:flex;gap:28px;font-size:14px;font-weight:500;color:var(--forest-2);}
+  .nav-links a{color:inherit;text-decoration:none;opacity:0.75;transition:opacity .2s;}
+  .nav-links a:hover{opacity:1;}
+
+  /* ---------- Hero ---------- */
+  .hero{padding:88px 0 64px;}
+  .hero-grid{display:grid;grid-template-columns:1.1fr 0.9fr;gap:56px;align-items:end;}
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;
+    color:var(--burgundy);margin-bottom:18px;display:flex;align-items:center;gap:10px;
+  }
+  .eyebrow::before{content:"";width:22px;height:1px;background:var(--burgundy);display:inline-block;}
+  h1{
+    font-family:'Fraunces',serif;font-weight:500;font-size:clamp(38px,5vw,58px);
+    line-height:1.04;margin:0 0 22px;letter-spacing:-0.01em;
+  }
+  h1 em{font-style:italic;color:var(--burgundy);font-weight:500;}
+  .hero p.lead{font-size:17px;line-height:1.6;color:rgba(43,38,32,0.72);max-width:46ch;margin:0;}
+  .hero-stats{display:flex;gap:34px;margin-top:34px;}
+  .hstat b{display:block;font-family:'Fraunces',serif;font-size:30px;font-weight:600;color:var(--forest-2);}
+  .hstat span{font-size:12.5px;color:rgba(43,38,32,0.6);}
+
+  /* Signature: the shelf teaser in hero */
+  .hero-shelf{
+    background:var(--forest);
+    border-radius:14px;padding:20px 20px 0;
+    box-shadow:var(--shadow);
+    position:relative; overflow:hidden;
+    height:280px;
+  }
+  .hero-shelf::after{
+    content:"";position:absolute;left:0;right:0;bottom:38px;height:10px;
+    background:linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,0.25));
+  }
+  .mini-row{display:flex;align-items:flex-end;gap:5px;height:210px;padding:0 4px;}
+  .mini-spine{border-radius:3px 3px 0 0;flex:1;min-width:6px;transform-origin:bottom;animation:rise .9s cubic-bezier(.2,.9,.25,1) both;}
+  .shelf-board{height:16px;background:linear-gradient(180deg,#3a2416,#241609);border-radius:0 0 6px 6px;box-shadow:0 6px 14px rgba(0,0,0,0.35);}
+  @keyframes rise{from{transform:scaleY(0);}to{transform:scaleY(1);}}
+
+  /* ---------- Section headings ---------- */
+  .section-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:14px;}
+  .section-head h2{font-family:'Fraunces',serif;font-size:28px;font-weight:500;margin:0;}
+  .section-head .sub{font-size:13.5px;color:rgba(43,38,32,0.6);}
+
+  section{padding:56px 0;border-top:1px solid var(--line);}
+
+  /* ---------- Controls ---------- */
+  .controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:34px;}
+  .chip{
+    font-family:'Inter',sans-serif;font-size:13px;font-weight:500;
+    padding:8px 15px;border-radius:999px;border:1px solid var(--line);
+    background:transparent;color:var(--ink);cursor:pointer;transition:all .18s ease;
+  }
+  .chip:hover{border-color:var(--forest);}
+  .chip.active{background:var(--forest);border-color:var(--forest);color:var(--paper);}
+  .chip .dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:7px;vertical-align:middle;}
+
+  /* ---------- Main Shelf (the chart) ---------- */
+  .shelf-panel{
+    background:var(--forest);
+    border-radius:18px;
+    padding:34px 30px 0;
+    box-shadow:var(--shadow);
+    position:relative;
+  }
+  .shelf-legend{display:flex;justify-content:space-between;color:rgba(239,232,216,0.55);font-family:'JetBrains Mono',monospace;font-size:11px;margin-bottom:14px;padding:0 4px;}
+  .shelf-row{display:flex;align-items:flex-end;gap:6px;height:230px;padding:0 4px;position:relative;}
+  .spine{
+    border-radius:4px 4px 0 0;
+    cursor:pointer;
+    position:relative;
+    transition:transform .16s ease, filter .16s ease;
+    flex-shrink:0;
+    transform-origin:bottom;
+    box-shadow: inset -6px 0 10px -6px rgba(0,0,0,0.35), inset 3px 0 0 rgba(255,255,255,0.08);
+  }
+  .spine:hover{transform:translateY(-8px);filter:brightness(1.12);}
+  .spine.dimmed{opacity:0.18;}
+  .spine .title-strip{
+    position:absolute;top:8px;left:50%;transform:translateX(-50%) rotate(180deg);
+    writing-mode:vertical-rl;
+    font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(255,255,255,0.75);
+    max-height:calc(100% - 16px);overflow:hidden;white-space:nowrap;letter-spacing:0.02em;
+  }
+  .shelf-board-main{height:22px;background:linear-gradient(180deg,#3a2416,#1c1209);border-radius:0 0 10px 10px;box-shadow:0 10px 20px rgba(0,0,0,0.4);margin-top:0;}
+  .shelf-caption{display:flex;justify-content:space-between;align-items:center;padding:16px 4px 26px;font-size:12.5px;color:rgba(239,232,216,0.55);}
+  .axis-note{font-family:'JetBrains Mono',monospace;}
+
+  /* Tooltip / detail card */
+  #detail{
+    position:fixed; z-index:80; pointer-events:none;
+    background:var(--ink); color:var(--paper);
+    padding:14px 16px; border-radius:10px; max-width:240px;
+    font-size:13px; line-height:1.45; box-shadow:0 20px 40px -12px rgba(0,0,0,0.5);
+    opacity:0; transform:translateY(6px); transition:opacity .15s ease, transform .15s ease;
+  }
+  #detail.show{opacity:1;transform:translateY(0);}
+  #detail .t-title{font-family:'Fraunces',serif;font-weight:600;font-size:15px;margin-bottom:2px;}
+  #detail .t-meta{color:rgba(239,232,216,0.6);font-size:11.5px;margin-bottom:8px;font-family:'JetBrains Mono',monospace;}
+  #detail .t-rating{color:var(--gold);font-size:12.5px;}
+
+  /* ---------- Stat cards ---------- */
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:44px;}
+  .stat-card{
+    background:var(--paper-2);border:1px solid var(--line);border-radius:14px;padding:22px 20px;
+  }
+  .stat-card .label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:rgba(43,38,32,0.55);margin-bottom:10px;}
+  .stat-card .value{font-family:'Fraunces',serif;font-size:30px;font-weight:600;color:var(--forest-2);}
+  .stat-card .delta{font-size:12px;margin-top:6px;color:var(--sage);}
+
+  /* ---------- Genre breakdown ---------- */
+  .genre-grid{display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:center;}
+  .bar-row{display:flex;align-items:center;gap:14px;margin-bottom:14px;}
+  .bar-label{width:120px;font-size:13px;font-weight:500;flex-shrink:0;}
+  .bar-track{flex:1;height:10px;background:var(--paper-2);border-radius:6px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:6px;transition:width 1s cubic-bezier(.2,.9,.25,1);}
+  .bar-count{width:26px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:12px;color:rgba(43,38,32,0.6);}
+
+  .quote-block{
+    background:var(--forest-2);color:var(--paper);border-radius:16px;padding:40px;
+    display:flex;flex-direction:column;gap:14px;
+  }
+  .quote-block .q{font-family:'Fraunces',serif;font-style:italic;font-size:22px;line-height:1.5;}
+  .quote-block .a{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold);}
+
+  /* ---------- Table ---------- */
+  table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  thead th{
+    text-align:left;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:11px;
+    text-transform:uppercase;letter-spacing:0.06em;color:rgba(43,38,32,0.55);
+    padding:10px 12px;border-bottom:1px solid var(--line);
+  }
+  tbody td{padding:13px 12px;border-bottom:1px solid var(--line);}
+  tbody tr{transition:background .15s ease;}
+  tbody tr:hover{background:var(--paper-2);}
+  .g-pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;}
+  .g-pill .dot{width:7px;height:7px;border-radius:50%;}
+  .stars{color:var(--gold);letter-spacing:1px;}
+
+  footer{padding:40px 0 60px;border-top:1px solid var(--line);}
+  .foot-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:rgba(43,38,32,0.55);flex-wrap:wrap;gap:12px;}
+  .foot-row a{color:var(--forest-2);text-decoration:none;font-weight:500;}
+
+  @media (max-width:860px){
+    .hero-grid{grid-template-columns:1fr;}
+    .stat-grid{grid-template-columns:1fr 1fr;}
+    .genre-grid{grid-template-columns:1fr;}
+    .nav-links{display:none;}
+    table{font-size:12px;}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="nav">
+    <div class="brand"><span class="mark"></span>Shelfmark</div>
+    <nav class="nav-links">
+      <a href="#shelf">Regal</a>
+      <a href="#stats">Zahlen</a>
+      <a href="#genres">Genres</a>
+      <a href="#log">Leseliste</a>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <section class="hero" style="border-top:none;padding-top:70px;">
+    <div class="hero-grid">
+      <div>
+        <div class="eyebrow">Persönliche Lese-Analyse · 2025</div>
+        <h1>Jedes Buch<br>ist ein <em>Datenpunkt.</em></h1>
+        <p class="lead">Shelfmark verwandelt ein Jahr Lesen in ein Regal, das man lesen kann: Breite zeigt den Umfang, Höhe die Bewertung, Farbe das Genre.</p>
+        <div class="hero-stats">
+          <div class="hstat"><b>24</b><span>Bücher gelesen</span></div>
+          <div class="hstat"><b>7.940</b><span>Seiten insgesamt</span></div>
+          <div class="hstat"><b>4.3</b><span>Ø Bewertung</span></div>
+        </div>
+      </div>
+      <div class="hero-shelf">
+        <div class="mini-row" id="miniRow"></div>
+        <div class="shelf-board"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="shelf">
+    <div class="section-head">
+      <div>
+        <h2>Das Regal</h2>
+        <div class="sub">Breite = Seitenzahl · Höhe = Bewertung · Klick oder Hover für Details</div>
+      </div>
+    </div>
+
+    <div class="controls" id="filterChips"></div>
+
+    <div class="shelf-panel">
+      <div class="shelf-legend">
+        <span>24 Titel</span>
+        <span class="axis-note">Höhe → Bewertung (1–5)</span>
+      </div>
+      <div class="shelf-row" id="shelfRow"></div>
+      <div class="shelf-board-main"></div>
+      <div class="shelf-caption">
+        <span>Sortiert nach Lesedatum</span>
+        <span class="axis-note">Breite → Seitenzahl</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="stats">
+    <div class="section-head">
+      <div>
+        <h2>Die Zahlen</h2>
+        <div class="sub">Zusammenfassung des Lesejahrs</div>
+      </div>
+    </div>
+    <div class="stat-grid" id="statGrid"></div>
+  </section>
+
+  <section id="genres">
+    <div class="section-head">
+      <div>
+        <h2>Genre-Verteilung</h2>
+        <div class="sub">Woraus sich das Regal zusammensetzt</div>
+      </div>
+    </div>
+    <div class="genre-grid">
+      <div id="genreBars"></div>
+      <div class="quote-block">
+        <div class="q">„Man liest nicht, um zu entkommen. Man liest, um besser anzukommen, wo man ist."</div>
+        <div class="a">— Notiz im Leseheft, März 2025</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="log">
+    <div class="section-head">
+      <div>
+        <h2>Leseliste</h2>
+        <div class="sub">Alle 24 Titel im Detail</div>
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr><th>Titel</th><th>Autor:in</th><th>Genre</th><th>Seiten</th><th>Bewertung</th><th>Gelesen</th></tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </section>
+
+  <footer>
+    <div class="foot-row">
+      <span>Shelfmark — ein Demo-Projekt für Datenvisualisierung & interaktives Frontend-Design.</span>
+      <a href="#shelf">Nach oben ↑</a>
+    </div>
+  </footer>
+
+</div>
+
+<div id="detail"></div>
+
+<script>
+const GENRES = {
+  "Sachbuch":   "#c9a227",
+  "Roman":      "#8b2e2e",
+  "Sci-Fi":     "#1f3a2e",
+  "Biografie":  "#7c9885",
+  "Psychologie":"#5b4636",
+};
+
+const BOOKS = [
+  {t:"Sapiens", a:"Y. N. Harari", g:"Sachbuch", p:512, r:4.6, d:"Jan"},
+  {t:"Der Circle", a:"D. Eggers", g:"Sci-Fi", p:504, r:3.8, d:"Jan"},
+  {t:"Atomic Habits", a:"J. Clear", g:"Psychologie", p:320, r:4.7, d:"Feb"},
+  {t:"Steve Jobs", a:"W. Isaacson", g:"Biografie", p:656, r:4.4, d:"Feb"},
+  {t:"Die Vermessung der Welt", a:"D. Kehlmann", g:"Roman", p:304, r:4.1, d:"Mar"},
+  {t:"Thinking, Fast and Slow", a:"D. Kahneman", g:"Psychologie", p:499, r:4.3, d:"Mar"},
+  {t:"Project Hail Mary", a:"A. Weir", g:"Sci-Fi", p:496, r:4.9, d:"Apr"},
+  {t:"Educated", a:"T. Westover", g:"Biografie", p:352, r:4.5, d:"Apr"},
+  {t:"Faktfulness", a:"H. Rosling", g:"Sachbuch", p:342, r:4.2, d:"Mai"},
+  {t:"Der Steppenwolf", a:"H. Hesse", g:"Roman", p:280, r:3.9, d:"Mai"},
+  {t:"Dune", a:"F. Herbert", g:"Sci-Fi", p:688, r:4.8, d:"Jun"},
+  {t:"Elon Musk", a:"W. Isaacson", g:"Biografie", p:688, r:3.7, d:"Jun"},
+  {t:"Homo Deus", a:"Y. N. Harari", g:"Sachbuch", p:496, r:4.0, d:"Jul"},
+  {t:"Normal People", a:"S. Rooney", g:"Roman", p:288, r:3.6, d:"Jul"},
+  {t:"Man's Search for Meaning", a:"V. Frankl", g:"Psychologie", p:184, r:4.9, d:"Aug"},
+  {t:"Klara and the Sun", a:"K. Ishiguro", g:"Sci-Fi", p:320, r:4.2, d:"Aug"},
+  {t:"The Lean Startup", a:"E. Ries", g:"Sachbuch", p:336, r:3.9, d:"Sep"},
+  {t:"Der Alchimist", a:"P. Coelho", g:"Roman", p:208, r:3.5, d:"Sep"},
+  {t:"Becoming", a:"M. Obama", g:"Biografie", p:448, r:4.6, d:"Okt"},
+  {t:"Nudge", a:"R. Thaler", g:"Psychologie", p:320, r:3.8, d:"Okt"},
+  {t:"The Martian", a:"A. Weir", g:"Sci-Fi", p:384, r:4.6, d:"Nov"},
+  {t:"Sofies Welt", a:"J. Gaarder", g:"Roman", p:576, r:4.0, d:"Nov"},
+  {t:"Deep Work", a:"C. Newport", g:"Sachbuch", p:296, r:4.4, d:"Dez"},
+  {t:"Shoe Dog", a:"P. Knight", g:"Biografie", p:400, r:4.7, d:"Dez"},
+];
+
+const maxPages = Math.max(...BOOKS.map(b=>b.p));
+const maxHeight = 230, minHeight = 40;
+const maxWidth = 46, minWidth = 14;
+
+function heightFor(r){ return minHeight + (r/5)*(maxHeight-minHeight); }
+function widthFor(p){ return minWidth + (p/maxPages)*(maxWidth-minWidth); }
+
+let activeGenre = null;
+
+function buildChips(){
+  const el = document.getElementById('filterChips');
+  const all = document.createElement('button');
+  all.className = 'chip active';
+  all.textContent = 'Alle Genres';
+  all.onclick = () => { activeGenre = null; render(); highlightChip(all); };
+  el.appendChild(all);
+
+  Object.entries(GENRES).forEach(([g,color])=>{
+    const b = document.createElement('button');
+    b.className = 'chip';
+    b.innerHTML = `<span class="dot" style="background:${color}"></span>${g}`;
+    b.onclick = () => { activeGenre = g; render(); highlightChip(b); };
+    el.appendChild(b);
+  });
+
+  function highlightChip(btn){
+    [...el.children].forEach(c=>c.classList.remove('active'));
+    btn.classList.add('active');
+  }
+}
+
+function buildShelf(){
+  const row = document.getElementById('shelfRow');
+  row.innerHTML = '';
+  BOOKS.forEach((b,i)=>{
+    const spine = document.createElement('div');
+    spine.className = 'spine';
+    spine.style.height = heightFor(b.r)+'px';
+    spine.style.width = widthFor(b.p)+'px';
+    spine.style.background = GENRES[b.g];
+    spine.style.animation = `rise .7s cubic-bezier(.2,.9,.25,1) both`;
+    spine.style.animationDelay = (i*0.02)+'s';
+    if(activeGenre && b.g !== activeGenre) spine.classList.add('dimmed');
+
+    const strip = document.createElement('div');
+    strip.className = 'title-strip';
+    strip.textContent = b.t;
+    spine.appendChild(strip);
+
+    spine.addEventListener('mousemove', (e)=>showDetail(e,b));
+    spine.addEventListener('mouseleave', hideDetail);
+
+    row.appendChild(spine);
+  });
+}
+
+function buildMiniShelf(){
+  const row = document.getElementById('miniRow');
+  BOOKS.forEach((b,i)=>{
+    const s = document.createElement('div');
+    s.className='mini-spine';
+    s.style.height = (30+ (b.r/5)*160)+'px';
+    s.style.background = GENRES[b.g];
+    s.style.animationDelay = (i*0.025)+'s';
+    row.appendChild(s);
+  });
+}
+
+function showDetail(e,b){
+  const d = document.getElementById('detail');
+  d.innerHTML = `<div class="t-title">${b.t}</div>
+    <div class="t-meta">${b.a} · ${b.g} · ${b.p} Seiten</div>
+    <div class="t-rating">★ ${b.r.toFixed(1)} / 5 &nbsp;·&nbsp; gelesen: ${b.d}</div>`;
+  d.style.left = (e.clientX + 18)+'px';
+  d.style.top = (e.clientY - 10)+'px';
+  d.classList.add('show');
+}
+function hideDetail(){ document.getElementById('detail').classList.remove('show'); }
+
+function buildStats(){
+  const totalPages = BOOKS.reduce((s,b)=>s+b.p,0);
+  const avgRating = (BOOKS.reduce((s,b)=>s+b.r,0)/BOOKS.length).toFixed(2);
+  const best = BOOKS.reduce((a,b)=> b.r>a.r?b:a);
+  const longest = BOOKS.reduce((a,b)=> b.p>a.p?b:a);
+
+  const stats = [
+    {label:"Bücher gelesen", value:BOOKS.length, delta:"+6 ggü. Vorjahr"},
+    {label:"Seiten gesamt", value:totalPages.toLocaleString('de-DE'), delta:"Ø 22/Tag"},
+    {label:"Top Bewertung", value:best.t, delta:`★ ${best.r.toFixed(1)}`},
+    {label:"Längstes Buch", value:longest.t, delta:`${longest.p} Seiten`},
+  ];
+
+  const grid = document.getElementById('statGrid');
+  grid.innerHTML = stats.map(s=>`
+    <div class="stat-card">
+      <div class="label">${s.label}</div>
+      <div class="value" style="font-size:${s.value.toString().length>10?'19px':'30px'}">${s.value}</div>
+      <div class="delta">${s.delta}</div>
+    </div>
+  `).join('');
+}
+
+function buildGenreBars(){
+  const counts = {};
+  Object.keys(GENRES).forEach(g=>counts[g]=0);
+  BOOKS.forEach(b=>counts[b.g]++);
+  const max = Math.max(...Object.values(counts));
+
+  const el = document.getElementById('genreBars');
+  el.innerHTML = Object.entries(counts).map(([g,c])=>`
+    <div class="bar-row">
+      <div class="bar-label">${g}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${(c/max*100)}%;background:${GENRES[g]}"></div></div>
+      <div class="bar-count">${c}</div>
+    </div>
+  `).join('');
+}
+
+function buildTable(){
+  const body = document.getElementById('tableBody');
+  body.innerHTML = BOOKS.slice().reverse().map(b=>`
+    <tr>
+      <td><strong>${b.t}</strong></td>
+      <td>${b.a}</td>
+      <td><span class="g-pill"><span class="dot" style="background:${GENRES[b.g]}"></span>${b.g}</span></td>
+      <td>${b.p}</td>
+      <td class="stars">${'★'.repeat(Math.round(b.r))}${'☆'.repeat(5-Math.round(b.r))}</td>
+      <td>${b.d} 2025</td>
+    </tr>
+  `).join('');
+}
+
+function render(){
+  buildShelf();
+}
+
+buildChips();
+buildMiniShelf();
+buildShelf();
+buildStats();
+buildGenreBars();
+buildTable();
+</script>
+
+</body>
+</html>
